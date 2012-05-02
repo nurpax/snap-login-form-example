@@ -1,5 +1,5 @@
 <apply template="base">
-      <h1>Not logged in!</h1>
+      <h1>Login</h1>
 
       <p><loginError/></p>
 
@@ -18,5 +18,5 @@
         </table>
       </form>
 
-      <p>Or don't have a login yet? <a href="/new_user">Create a new user</a></p>
+      <p>Don't have a login yet? <a href="/new_user">Create a new user</a></p>
 </apply>

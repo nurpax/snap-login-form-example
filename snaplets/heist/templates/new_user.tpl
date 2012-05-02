@@ -1,5 +1,6 @@
 <apply template="base">
-      <h1>Not logged in!</h1>
+
+      <h1>Register a new user</h1>
 
       <form method="post" action="/new_user">
         <table id="info">

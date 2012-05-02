@@ -86,4 +86,5 @@ app = makeSnaplet "app" "An snaplet example application." Nothing $ do
     s <- nestSnaplet "sess" sess $ initCookieSessionManager "site_key.txt" "sess" (Just 3600)
     a <- nestSnaplet "auth" auth $ initJsonFileAuthManager defAuthSettings sess "users.json"
     addRoutes routes
+    addAuthSplices auth
     return $ App h s a
