@@ -26,9 +26,9 @@ Executable snap-login-form-example
     heist >= 0.8 && < 0.9,
     MonadCatchIO-transformers >= 0.2.1 && < 0.4,
     mtl >= 2 && < 3,
-    snap == 0.8.*,
-    snap-core   == 0.8.*,
-    snap-server == 0.8.*,
+    snap,
+    snap-core,
+    snap-server,
     text >= 0.11 && < 0.12,
     time >= 1.1 && < 1.5,
     xmlhtml == 0.1.*

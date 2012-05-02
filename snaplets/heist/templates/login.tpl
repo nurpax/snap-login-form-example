@@ -1,6 +1,8 @@
 <apply template="base">
       <h1>Not logged in!</h1>
 
+      <p><loginError/></p>
+
       <form method="post" action="/login">
         <table id="info">
           <tr>

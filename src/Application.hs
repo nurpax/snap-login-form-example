@@ -8,7 +8,6 @@ module Application where
 
 ------------------------------------------------------------------------------
 import Data.Lens.Template
-import Data.Time.Clock
 import Snap.Snaplet
 import Snap.Snaplet.Heist
 import Snap.Snaplet.Auth
