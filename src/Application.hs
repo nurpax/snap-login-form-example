@@ -17,7 +17,6 @@ import Snap.Snaplet.Session
 ------------------------------------------------------------------------------
 data App = App
     { _heist :: Snaplet (Heist App)
-    , _startTime :: UTCTime
     , _sess :: Snaplet SessionManager
     , _auth :: Snaplet (AuthManager App)
     }

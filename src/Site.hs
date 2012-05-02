@@ -37,46 +37,49 @@ import           Application
 -- The 'ifTop' is required to limit this to the top of a route.
 -- Otherwise, the way the route table is currently set up, this action
 -- would be given every request.
-index :: Handler App App ()
-index = ifTop $ heistLocal (bindSplices indexSplices) $ render "index"
-  where
-    indexSplices =
-        [ ("start-time",   startTimeSplice)
-        , ("current-time", currentTimeSplice)
-        ]
+index :: Handler App (AuthManager App) ()
+index =
+  ifTop $ requireUser auth noLogin loggedIn where
+    loggedIn =
+      heistLocal (bindString "login" "janne") $ render "index"
+    noLogin =
+      heistLocal (bindString "login" "guest") $ render "login"
 
 
-------------------------------------------------------------------------------
--- | For your convenience, a splice which shows the start time.
-startTimeSplice :: Splice AppHandler
-startTimeSplice = do
-  time <- lift $ gets _startTime
-  return $ [TextNode $ T.pack $ show $ time]
+login :: Handler App (AuthManager App) ()
+login = do
+  -- TODO handle Maybes
+  login <- fmap fromJust $ getParam "login"
+  passwd <- fmap fromJust $ getParam "password"
+  usr <- loginByUsername login (ClearText passwd) True
+  redirect "/"
+
+logoff :: Handler App (AuthManager App) ()
+logoff = do
+  logout
+  redirect "/"
+
+newUserForm :: Handler App (AuthManager App) ()
+newUserForm = do
+  heistLocal (bindSplices []) $ render "new_user"
 
 
-------------------------------------------------------------------------------
--- | For your convenience, a splice which shows the current time.
-currentTimeSplice :: Splice AppHandler
-currentTimeSplice = do
-  time <- liftIO getCurrentTime
-  return $ [TextNode $ T.pack $ show $ time]
-
-
-------------------------------------------------------------------------------
--- | Renders the echo page.
-echo :: Handler App App ()
-echo = do
-  message <- decodedParam "stuff"
-  heistLocal (bindString "message" (T.decodeUtf8 message)) $ render "echo"
-    where
-      decodedParam p = fromMaybe "" <$> getParam p
-
+newUserCreate :: Handler App (AuthManager App) ()
+newUserCreate = do
+  -- TODO handle Maybes
+  acc <- fmap fromJust $ getParam "login"
+  passwd <- fmap fromJust $ getParam "password"
+  _usr <- createUser (T.decodeUtf8 acc) passwd
+  redirect "/"
 
 ------------------------------------------------------------------------------
 -- | The application's routes.
 routes :: [(ByteString, Handler App App ())]
-routes = [ ("/",            index)
-         , ("/echo/:stuff", echo)
+routes = [ ("/",              with auth $ index)
+         , ("/login",         with auth $ login)
+         , ("/logout",         with auth $ logoff)
+         , ("/new_user", with auth $ newUserForm)
+         , ("/new_user_submit",  with auth $ newUserCreate)
          , ("", with heist heistServe)
          , ("", serveDirectory "static")
          ]
@@ -85,11 +88,8 @@ routes = [ ("/",            index)
 -- | The application initializer.
 app :: SnapletInit App App
 app = makeSnaplet "app" "An snaplet example application." Nothing $ do
-    sTime <- liftIO getCurrentTime
     h <- nestSnaplet "heist" heist $ heistInit "templates"
     s <- nestSnaplet "sess" sess $ initCookieSessionManager "site_key.txt" "sess" (Just 3600)
     a <- nestSnaplet "auth" auth $ initJsonFileAuthManager defAuthSettings sess "users.json"
     addRoutes routes
-    return $ App h sTime s a
-
-
+    return $ App h s a
