@@ -13,7 +13,6 @@ module Site
 import           Control.Applicative
 import           Data.ByteString (ByteString)
 import           Data.Maybe
-import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import           Snap.Core
 import           Snap.Snaplet
