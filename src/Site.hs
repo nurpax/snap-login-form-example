@@ -13,6 +13,7 @@ module Site
 import           Control.Applicative
 import           Data.ByteString (ByteString)
 import           Data.Maybe
+import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import           Snap.Core
 import           Snap.Snaplet
@@ -25,6 +26,10 @@ import           Text.Templating.Heist
 ------------------------------------------------------------------------------
 import           Application
 
+
+authFailureToError :: Maybe AuthFailure -> Maybe T.Text
+authFailureToError e =
+  if isJust e then Just "Unknown user or wrong password" else Nothing
 
 ------------------------------------------------------------------------------
 -- | Renders the front page of the sample site.
@@ -48,7 +53,7 @@ handleLogin authError =
 -- Handle login submit
 handleLoginSubmit :: Handler App (AuthManager App) ()
 handleLoginSubmit =
-  loginUser "login" "password" Nothing (\_ -> handleLogin (Just "login error"))q (redirect "/")
+  loginUser "login" "password" Nothing (handleLogin . authFailureToError . Just) (redirect "/")
 
 handleLogout :: Handler App (AuthManager App) ()
 handleLogout =
