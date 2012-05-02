@@ -11,13 +11,9 @@ module Site
 
 ------------------------------------------------------------------------------
 import           Control.Applicative
-import           Control.Monad.Trans
-import           Control.Monad.State
 import           Data.ByteString (ByteString)
 import           Data.Maybe
-import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import           Data.Time.Clock
 import           Snap.Core
 import           Snap.Snaplet
 import           Snap.Snaplet.Auth
@@ -26,7 +22,6 @@ import           Snap.Snaplet.Heist
 import           Snap.Snaplet.Session.Backends.CookieSession
 import           Snap.Util.FileServe
 import           Text.Templating.Heist
-import           Text.XmlHtml hiding (render)
 ------------------------------------------------------------------------------
 import           Application
 
@@ -40,48 +35,47 @@ import           Application
 index :: Handler App (AuthManager App) ()
 index =
   ifTop $ requireUser auth noLogin loggedIn where
-    loggedIn =
-      heistLocal (bindString "login" "janne") $ render "index"
+    loggedIn = do
+      acc <- fmap (maybe "" userLogin) currentUser
+      heistLocal (bindString "login" acc) $ render "index"
     noLogin =
-      heistLocal (bindString "login" "guest") $ render "login"
+      heistLocal (bindSplices []) $ render "login"
 
 
-login :: Handler App (AuthManager App) ()
-login = do
+-- Handle login form submit
+handleLogin :: Handler App (AuthManager App) ()
+handleLogin = do
   -- TODO handle Maybes
   login <- fmap fromJust $ getParam "login"
   passwd <- fmap fromJust $ getParam "password"
-  usr <- loginByUsername login (ClearText passwd) True
+  _ <- loginByUsername login (ClearText passwd) True
   redirect "/"
 
-logoff :: Handler App (AuthManager App) ()
-logoff = do
-  logout
-  redirect "/"
+handleLogout :: Handler App (AuthManager App) ()
+handleLogout =
+  logout >> redirect "/"
 
-newUserForm :: Handler App (AuthManager App) ()
-newUserForm = do
-  heistLocal (bindSplices []) $ render "new_user"
-
-
-newUserCreate :: Handler App (AuthManager App) ()
-newUserCreate = do
-  -- TODO handle Maybes
-  acc <- fmap fromJust $ getParam "login"
-  passwd <- fmap fromJust $ getParam "password"
-  _usr <- createUser (T.decodeUtf8 acc) passwd
-  redirect "/"
+-- Handle new user form submit
+handleNewUser :: Handler App (AuthManager App) ()
+handleNewUser = method GET handleForm <|> method POST handleFormSubmit where
+  handleForm =
+    heistLocal (bindSplices []) $ render "new_user"
+  handleFormSubmit = do
+    -- TODO handle Maybes
+    login <- fmap fromJust $ getParam "login"
+    passwd <- fmap fromJust $ getParam "password"
+    _ <- createUser (T.decodeUtf8 login) passwd
+    redirect "/"
 
 ------------------------------------------------------------------------------
 -- | The application's routes.
 routes :: [(ByteString, Handler App App ())]
-routes = [ ("/",              with auth $ index)
-         , ("/login",         with auth $ login)
-         , ("/logout",         with auth $ logoff)
-         , ("/new_user", with auth $ newUserForm)
-         , ("/new_user_submit",  with auth $ newUserCreate)
-         , ("", with heist heistServe)
-         , ("", serveDirectory "static")
+routes = [ ("/",         with auth $ index)
+         , ("/login",    with auth $ handleLogin)
+         , ("/logout",   with auth $ handleLogout)
+         , ("/new_user", with auth $ handleNewUser)
+         , ("",          with heist heistServe)
+         , ("",          serveDirectory "static")
          ]
 
 ------------------------------------------------------------------------------
