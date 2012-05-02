@@ -27,10 +27,6 @@ import           Text.Templating.Heist
 import           Application
 
 
-authFailureToError :: Maybe AuthFailure -> Maybe T.Text
-authFailureToError e =
-  if isJust e then Just "Unknown user or wrong password" else Nothing
-
 ------------------------------------------------------------------------------
 -- | Renders the front page of the sample site.
 --
@@ -53,22 +49,22 @@ handleLogin authError =
 -- Handle login submit
 handleLoginSubmit :: Handler App (AuthManager App) ()
 handleLoginSubmit =
-  loginUser "login" "password" Nothing (handleLogin . authFailureToError . Just) (redirect "/")
+  loginUser "login" "password" Nothing (\_ -> handleLogin err) (redirect "/") where
+    err = Just . T.pack $ "Unknown user or password"
 
 handleLogout :: Handler App (AuthManager App) ()
-handleLogout =
-  logout >> redirect "/"
+handleLogout = do
+  logout
+  redirect "/"
 
 -- Handle new user form submit
 handleNewUser :: Handler App (AuthManager App) ()
 handleNewUser = method GET handleForm <|> method POST handleFormSubmit where
   handleForm =
     heistLocal (bindSplices []) $ render "new_user"
+
   handleFormSubmit = do
-    -- TODO handle Maybes
-    login <- fmap fromJust $ getParam "login"
-    passwd <- fmap fromJust $ getParam "password"
-    _ <- createUser (T.decodeUtf8 login) passwd
+    registerUser "login" "password"
     redirect "/"
 
 ------------------------------------------------------------------------------
