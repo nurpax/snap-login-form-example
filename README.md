@@ -1,7 +1,7 @@
 NOTE
 ====
 
-This is project abandonware.  The bulk of this code got merged folded into
+This is project is here just for history.  The bulk of this code got merged folded into
 Snap's default project template.  So use "snap init" to get the code and work
 from there.
 
